@@ -1,31 +1,36 @@
 import { Table } from 'antd';
 import { DataType } from '@/types';
 import { columns } from '../config/column';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { fetchUsers } from '@/api';
+import {createEvent, createStore} from "effector";
+import {useUnit} from "effector-react";
+
+const addData = createEvent<DataType[]>();
+const loadData = createEvent<boolean>();
+
+const $data = createStore<DataType[]>([])
+  .on(addData, (_, newData) => newData);
+
+const $loading = createStore(false)
+  .on(loadData, (_, isLoading) => isLoading);
+
+$loading.watch(loading => {
+  if (loading) {
+    fetchUsers({results: 10, page: 1})
+      .then(data => {
+        addData(data.results);
+      })
+      .finally(() => loadData(false));
+  }
+});
 
 export function UsersTable() {
-  const [data, setData] = useState<DataType[]>();
-  const [loading, setLoading] = useState(false);
-
-
-  const fetchData = () => {
-    setLoading(true);
-
-    const result = fetchUsers({
-      results: 10,
-      page: 1,
-    });
-
-    result.then( (data) => {
-      setData(() => {
-        return data.results
-      });
-    }).finally(() => setLoading(false));
-  };
+  const data = useUnit($data);
+  const loading = useUnit($loading);
 
   useEffect(() => {
-    fetchData();
+    loadData(true);
   }, []);
 
   return (
