@@ -2,35 +2,36 @@ import { Table } from 'antd';
 import { DataType } from '@/types';
 import { columns } from '../config/column';
 import { useEffect } from 'react';
-import { fetchUsers } from '@/api';
-import {createEvent, createStore} from "effector";
-import {useUnit} from "effector-react";
+import {createEvent, createStore, sample} from "effector";
+import {createGate, useGate, useUnit} from "effector-react";
+import {fetchUsersFx} from "@/feature/Table/ui/helpers.ts";
+
+const Gate = createGate();
 
 const addData = createEvent<DataType[]>();
 const loadData = createEvent<boolean>();
 
 const $data = createStore<DataType[]>([])
-  .on(addData, (_, newData) => newData);
+  .on(addData, (_, newData) => newData)
+  .on(fetchUsersFx.doneData, (_, data) => data);
 
 const $loading = createStore(false)
-  .on(loadData, (_, isLoading) => isLoading);
+  .on(loadData, (_, isLoading) => isLoading)
+  .on(fetchUsersFx.finally, () => false);
 
-$loading.watch(loading => {
-  if (loading) {
-    fetchUsers({results: 10, page: 1})
-      .then(data => {
-        addData(data.results);
-      })
-      .finally(() => loadData(false));
-  }
-});
+sample({ clock: Gate.open, target: fetchUsersFx, fn: () => ({ results: 10, page: 1 }) });
+sample({ clock: Gate.close, target: loadData.prepend(() => false) });
 
 export function UsersTable() {
-  const data = useUnit($data);
-  const loading = useUnit($loading);
+  useGate(Gate);
+  const { data, loading } = useUnit({ data: $data, loading: $loading });
 
   useEffect(() => {
-    loadData(true);
+    console.log('Gate opened');
+
+    return () => {
+      console.log('Gate close');
+    };
   }, []);
 
   return (
