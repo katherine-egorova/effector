@@ -1,7 +1,7 @@
-import './App.css';
-import { UsersTable } from '@/feature/Table';
+import './style.css';
+import { UsersTable } from '@/entities/users-table';
 
-function App() {
+export function MainPage() {
   return (
     <>
       <div >
@@ -11,5 +11,3 @@ function App() {
     </>
   );
 }
-
-export default App;

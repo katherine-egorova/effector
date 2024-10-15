@@ -1,7 +1,7 @@
 import { ColumnsType } from 'antd/es/table';
-import { DataType } from '@/types';
+import { IUserData } from '@/shared/interfaces';
 
-export const columns: ColumnsType<DataType> = [
+export const columns: ColumnsType<IUserData> = [
   {
     title: 'Name',
     dataIndex: 'name',
